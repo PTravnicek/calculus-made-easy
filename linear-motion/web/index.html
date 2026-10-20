@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Linear Motion</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Spectral:ital,wght@0,500;0,600;1,500&display=swap">
+<link rel="stylesheet" href="player.css">
+<style>
+/* lesson tokens: acceleration gets its own colour, as in the video */
+:root { --acc: #C4581A; --ruler: #E9D9A6; --ruler-ink: #3A2E12; --skin: #C99A7C; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --acc: #FF8C42; } }
+:root[data-theme="dark"] { --acc: #FF8C42; }
+
+/* the multiflash figure in the masthead */
+.strobe { width: 210px; height: auto; color: var(--ink); }
+.strobe .ball { fill: var(--accent); }
+.strobe .ghost { fill: var(--accent); opacity: 0.35; }
+.strobe .scale { stroke: var(--muted); }
+.strobe text { font: 12px var(--mono); fill: var(--muted); }
+.strobe .v { stroke: var(--mark); }
+.strobe .lab-v { fill: var(--mark); }
+
+/* motion lab controls */
+.lab-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.82rem; color: var(--muted); margin: 0; }
+.legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+
+/* catch the ruler */
+.catch {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
+  padding: 18px 20px; display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 24px; max-width: 900px;
+}
+.catch canvas { width: 100%; display: block; border-radius: 8px; background: var(--bg); border: 1px solid var(--rule); touch-action: manipulation; cursor: pointer; }
+.catch-side { display: grid; gap: 14px; align-content: start; min-width: 0; }
+.catch-big { font: 600 2.1rem/1.1 var(--display); font-variant-numeric: tabular-nums; }
+.catch-big small { font: 500 0.9rem var(--sans); color: var(--muted); }
+.attempts { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.attempts li { font: 500 0.8rem var(--mono); background: var(--chip); border-radius: 999px; padding: 4px 9px; font-variant-numeric: tabular-nums; }
+.attempts li.best { background: var(--good); color: var(--surface); }
+.catch-msg { min-height: 1.5em; margin: 0; color: var(--muted); }
+@media (max-width: 760px) { .catch { grid-template-columns: minmax(0, 1fr); padding: 14px; } .catch canvas { max-width: 260px; } }
+</style>
+<script src="data.js"></script>
+<script src="player.js"></script>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div>
+      <p class="eyebrow"><b>Mechanics</b> · motion along a straight line</p>
+      <h1>Linear Motion</h1>
+      <p class="lede">A narrated, animated lesson on speed, velocity, acceleration and free fall, and how they show up as slopes and areas on a graph. The video stops to ask you questions. Below it are exercises, a motion lab and a ruler to catch.</p>
+      <dl class="facts" id="facts"></dl>
+    </div>
+    <svg class="strobe" viewBox="0 0 210 190" role="img" aria-label="A dropped ball photographed once a second: it falls 5, 20 and 45 metres, with its speed growing by 10 metres per second each second">
+      <line class="scale" x1="40" y1="12" x2="40" y2="178" stroke-width="1.2"/>
+      <line class="scale" x1="34" y1="16" x2="46" y2="16"/><text x="4" y="20">0 m</text>
+      <line class="scale" x1="34" y1="27" x2="46" y2="27"/><text x="4" y="31">5</text>
+      <line class="scale" x1="34" y1="60" x2="46" y2="60"/><text x="4" y="64">20</text>
+      <line class="scale" x1="34" y1="115" x2="46" y2="115"/><text x="4" y="119">45</text>
+      <line class="scale" x1="34" y1="174" x2="46" y2="174"/><text x="4" y="178">80</text>
+      <circle class="ghost" cx="80" cy="16" r="7"/>
+      <circle class="ghost" cx="80" cy="27" r="7"/>
+      <circle class="ghost" cx="80" cy="60" r="7"/>
+      <circle class="ghost" cx="80" cy="115" r="7"/>
+      <circle class="ball" cx="80" cy="174" r="7"/>
+      <line class="v" x1="98" y1="27" x2="98" y2="37" stroke-width="2.5"/>
+      <line class="v" x1="98" y1="60" x2="98" y2="80" stroke-width="2.5"/>
+      <line class="v" x1="98" y1="115" x2="98" y2="145" stroke-width="2.5"/>
+      <text x="106" y="20">t = 0</text>
+      <text class="lab-v" x="106" y="34">10 m/s</text>
+      <text class="lab-v" x="106" y="72">20 m/s</text>
+      <text class="lab-v" x="106" y="132">30 m/s</text>
+      <text x="106" y="178">40 m/s</text>
+    </svg>
+  </header>
+
+  <section id="player" aria-label="Interactive video"></section>
+
+  <section id="exercises" aria-labelledby="exTitle" style="display:grid; gap:18px">
+    <div class="section-head">
+      <p class="eyebrow">After the video</p>
+      <h2 id="exTitle">Exercises</h2>
+      <p>Ten problems on the ideas in the video. Type a number, a fraction such as <code>45/2</code>, or a root such as <code>sqrt(2)</code>. Use $g = 10$ m/s² unless a problem says otherwise, and take the direction of motion, or upwards, as positive.</p>
+      <div class="progress"><span class="count" id="exCount"></span><div class="dots" id="exDots"></div></div>
+    </div>
+    <div class="sheet" id="sheet"></div>
+  </section>
+
+  <section id="motionlab" aria-labelledby="labTitle" style="display:grid; gap:18px">
+    <div class="section-head">
+      <p class="eyebrow">Motion lab</p>
+      <h2 id="labTitle">Three graphs of one motion</h2>
+      <p>Pick a motion, or set your own starting velocity and acceleration, and press Play. The distance graph's slope is the velocity, the velocity graph's slope is the acceleration, and the shaded area under the velocity graph is how far the body has gone.</p>
+    </div>
+    <div class="lab">
+      <div class="lab-plots">
+        <canvas class="pcanvas" id="mlTrack" aria-label="The moving body on its track, with its velocity and acceleration arrows"></canvas>
+        <canvas class="pcanvas draggable" id="mlX" tabindex="0" aria-label="Position against time. Drag, or use the arrow keys, to move through time."></canvas>
+        <canvas class="pcanvas draggable" id="mlV" tabindex="0" aria-label="Velocity against time, with the area under it shaded"></canvas>
+        <canvas class="pcanvas" id="mlA" aria-label="Acceleration against time"></canvas>
+        <p class="legend"><span><i style="background:var(--accent)"></i>position $x$</span><span><i style="background:var(--mark)"></i>velocity $v$</span><span><i style="background:var(--acc)"></i>acceleration $a$</span></p>
+      </div>
+      <div class="lab-side">
+        <label for="mlPreset"><span>Motion</span>
+          <select id="mlPreset"></select>
+        </label>
+        <label for="mlV0"><span>Starting velocity $v_0$: <output id="mlV0Out"></output> m/s</span>
+          <input type="range" id="mlV0" min="-20" max="30" step="0.5" value="0">
+        </label>
+        <label for="mlAcc"><span>Acceleration $a$: <output id="mlAccOut"></output> m/s²</span>
+          <input type="range" id="mlAcc" min="-10" max="10" step="0.5" value="2">
+        </label>
+        <label for="mlT"><span>Time $t$: <output id="mlTOut"></output> s</span>
+          <input type="range" id="mlT" min="0" max="6" step="0.01" value="0">
+        </label>
+        <div class="lab-buttons">
+          <button class="btn primary" id="mlPlay">Play</button>
+          <button class="btn" id="mlReset">Back to t = 0</button>
+        </div>
+        <dl class="vals" id="mlVals"></dl>
+      </div>
+    </div>
+  </section>
+
+  <section id="ruler" aria-labelledby="rulerTitle" style="display:grid; gap:18px">
+    <div class="section-head">
+      <p class="eyebrow">Try it</p>
+      <h2 id="rulerTitle">Catch the ruler</h2>
+      <p>Press Start, wait, and catch the ruler the moment it drops: press Space, click it, or tap it. How far it fell tells you your reaction time, through $t = \sqrt{2d/g}$.</p>
+    </div>
+    <div class="catch">
+      <canvas id="rulerCanvas" aria-label="A 30 centimetre ruler held between two fingers"></canvas>
+      <div class="catch-side">
+        <div class="lab-buttons"><button class="btn primary" id="rulerStart">Start</button></div>
+        <p class="catch-msg" id="rulerMsg" aria-live="polite">The ruler hangs with its 0 cm mark between your fingers.</p>
+        <div>
+          <div class="catch-big" id="rulerDist">– <small>cm fallen</small></div>
+          <div class="catch-big" id="rulerTime" style="color: var(--mark)">– <small>s reaction time</small></div>
+        </div>
+        <ol class="attempts" id="rulerAttempts" aria-label="Your attempts"></ol>
+        <p class="caption-small">Most people land between 15 and 25 cm, which is 0.17 to 0.23 s. A 30 cm ruler can only time reactions up to about 0.25 s.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="credits">
+    <p>The topics follow the linear-motion chapter of Paul G. Hewitt's <i>Conceptual Physics</i>. The narration, examples, questions and exercises here are original.</p>
+    <p>Animations made with Manim Community Edition, the community-maintained fork of 3Blue1Brown's <i>manim</i>. <span id="voiceCredit"></span></p>
+  </footer>
+</div>
+
+<script>
+"use strict";
+const { $, el, clamp, css, fmtNum, Plot, dragX, redrawers, typeset } = Lesson.util;
+
+/* ── the questions the video stops for ── */
+const QUESTIONS = {
+  "lm1-coach": {
+    kind: "number",
+    prompt: "A coach averages $75$ km/h on a journey lasting 2 hours 24 minutes. How far does it travel?",
+    label: "distance $=$", unit: "km", answer: 180,
+    explain: "24 minutes is $0.4$ h, so the trip lasts $2.4$ h, and $75 \\times 2.4 = 180$ km.",
+  },
+  "lm2-ferry": {
+    kind: "number",
+    prompt: "A ferry heads upstream at $6$ m/s relative to the water, against a current of $2$ m/s. How fast does it pass the riverbank?",
+    label: "speed $=$", unit: "m/s", answer: 4,
+    explain: "The current carries it backwards, so the velocities subtract: $6 - 2 = 4$ m/s.",
+  },
+  "lm3-roundabout": {
+    kind: "choice",
+    prompt: "A cyclist rides round a roundabout at a steady $20$ km/h. What stays constant?",
+    options: ["the speed only", "the velocity only", "both", "neither"], answer: 0,
+    explain: "The speed is steady, but the direction keeps turning, so the velocity changes all the time.",
+  },
+  "lm4-tram": {
+    kind: "number",
+    prompt: "A tram speeds up from $8$ m/s to $14$ m/s in $3$ s. What is its acceleration?",
+    label: "$a =$", unit: "m/s²", answer: 2,
+    explain: "It gains $6$ m/s in $3$ s: $a = 6/3 = 2$ m/s².",
+  },
+  "lm5-ramp": {
+    kind: "choice",
+    prompt: "A ball rolls from rest and covers $1$ unit in the first second. How far from the start is it after $3$ seconds?",
+    options: ["3 units", "5 units", "6 units", "9 units"], answer: 3,
+    explain: "Distance grows as the square of the time: $3^2 = 9$ units. Five of them come in the third second alone.",
+  },
+  "lm6-top": {
+    kind: "choice",
+    prompt: "A ball is thrown straight up. At the very top of its flight, what are its velocity and acceleration?",
+    options: ["both are zero", "velocity zero, acceleration $10$ m/s² downward", "velocity zero, acceleration $10$ m/s² upward", "velocity $10$ m/s upward, acceleration zero"],
+    answer: 1,
+    explain: "The velocity is zero for an instant, but it is still changing by $10$ m/s every second, downward. With zero acceleration the ball would stay up there.",
+  },
+  "lm7-well": {
+    kind: "number",
+    prompt: "A stone dropped into a well hits the water $3$ s later. How deep is the well? Use $g = 10$ m/s².",
+    label: "depth $=$", unit: "m", answer: 45,
+    explain: "$d = \\tfrac12 g t^2 = \\tfrac12 \\cdot 10 \\cdot 3^2 = 45$ m. It hits the water at $30$ m/s.",
+  },
+  "lm8-ruler": {
+    kind: "number",
+    prompt: "Someone catches a falling metre stick after it has dropped $45$ cm. What was their reaction time? Use $g = 10$ m/s².",
+    label: "$t =$", unit: "s", answer: 0.3,
+    explain: "$t = \\sqrt{2d/g} = \\sqrt{2 \\times 0.45 / 10} = \\sqrt{0.09} = 0.3$ s.",
+  },
+};
+
+/* ── exercises ── */
+const EXERCISES = [
+  { n: 1, text: "A cyclist covers $7.2$ km in $20$ minutes. What is the average speed, in km/h and in m/s?",
+    fields: [{ label: "in km/h", answer: 21.6 }, { label: "in m/s", answer: 6 }],
+    hint: "Twenty minutes is a third of an hour. To turn km/h into m/s, divide by $3.6$.",
+    solution: "$7.2 \\div \\tfrac13 = 21.6$ km/h, and $21.6 \\div 3.6 = 6$ m/s. Or directly: $7200$ m in $1200$ s is $6$ m/s." },
+  { n: 2, text: "A car on the motorway does $108$ km/h. How fast is that in m/s, and how far does the car go in $5$ s?",
+    fields: [{ label: "speed (m/s)", answer: 30 }, { label: "distance in 5 s (m)", answer: 150 }],
+    hint: "Divide by $3.6$ to get m/s, then distance $=$ speed $\\times$ time.",
+    solution: "$108 \\div 3.6 = 30$ m/s, so in $5$ s it covers $30 \\times 5 = 150$ m: one and a half football pitches." },
+  { n: 3, text: "An escalator runs upward at $0.8$ m/s. How fast do you move relative to the building if you walk up it at $1.2$ m/s relative to the steps? And if you walk down the same up-escalator at $1.2$ m/s relative to the steps?",
+    fields: [{ label: "walking up (m/s)", answer: 2.0 }, { label: "walking down: speed (m/s)", answer: 0.4 }],
+    hint: "Going the same way, the velocities add. Going against the escalator, they subtract.",
+    solution: "Up: $1.2 + 0.8 = 2.0$ m/s. Down: $1.2 - 0.8 = 0.4$ m/s, and since your $1.2$ wins, you do go down, slowly." },
+  { n: 4, text: "A car brakes from $25$ m/s to rest in $5$ s. What is its acceleration? Take the direction of travel as positive.",
+    fields: [{ label: "$a$ (m/s²)", answer: -5 }],
+    hint: "Acceleration is change in velocity over time, and the change here is $0 - 25$.",
+    solution: "$a = (0 - 25)/5 = -5$ m/s². The minus sign says the acceleration points backwards, against the motion." },
+  { n: 5, text: "A ball rolls from rest down a ramp with constant acceleration and covers $0.5$ m in the first second. What is its acceleration, and how far from the start is it after $4$ s?",
+    fields: [{ label: "$a$ (m/s²)", answer: 1 }, { label: "distance after 4 s (m)", answer: 8 }],
+    hint: "Use $d = \\tfrac12 a t^2$ with $t = 1$ s first. Then remember distance grows as $t^2$.",
+    solution: "$0.5 = \\tfrac12 a \\cdot 1^2$ gives $a = 1$ m/s². After $4$ s, $d = \\tfrac12 \\cdot 1 \\cdot 16 = 8$ m: sixteen times the first second's distance." },
+  { n: 6, text: "A stone dropped from a bridge hits the river $2.5$ s later. How high is the bridge, and how fast is the stone going when it hits?",
+    fields: [{ label: "height (m)", answer: 31.25 }, { label: "speed (m/s)", answer: 25 }],
+    hint: "$d = \\tfrac12 g t^2$ for the height, $v = g t$ for the speed.",
+    solution: "$d = \\tfrac12 \\cdot 10 \\cdot 2.5^2 = 31.25$ m, and $v = 10 \\cdot 2.5 = 25$ m/s (about $90$ km/h)." },
+  { n: 7, text: "A ball is thrown straight up at $15$ m/s. How long does it take to reach the top, how high does it rise, and how long is it in the air altogether?",
+    fields: [{ label: "time to the top (s)", answer: 1.5 }, { label: "height (m)", answer: 11.25 }, { label: "time in the air (s)", answer: 3 }],
+    hint: "It loses $10$ m/s every second until its velocity is zero. The way down is the mirror image of the way up.",
+    solution: "$15 \\div 10 = 1.5$ s to the top. Falling back from rest for $1.5$ s covers $\\tfrac12 \\cdot 10 \\cdot 1.5^2 = 11.25$ m, so that's the height. Up and down take $1.5$ s each: $3$ s in all." },
+  { n: 8, text: "A tennis ball tossed straight up rises $1.8$ m above the hand. How fast did it leave the hand, and how long until it is back in the hand?",
+    fields: [{ label: "launch speed (m/s)", answer: 6 }, { label: "time until caught (s)", answer: 1.2 }],
+    hint: "Think of the way down: a fall from rest through $1.8$ m. How long does it take, and how fast does it end up?",
+    solution: "Falling $1.8$ m from rest takes $t = \\sqrt{2 \\cdot 1.8/10} = 0.6$ s and ends at $10 \\cdot 0.6 = 6$ m/s. The way up mirrors it, so it left the hand at $6$ m/s and is back after $1.2$ s." },
+  { n: 9, text: "The graph shows a cyclist's velocity during a short ride. Find the acceleration over the first $4$ s, the acceleration while braking, and the total distance covered.",
+    widget: "vgraph",
+    fields: [{ label: "first 4 s: $a$ (m/s²)", answer: 3 }, { label: "braking: $a$ (m/s²)", answer: -4 }, { label: "total distance (m)", answer: 114 }],
+    hint: "Each acceleration is the slope of its straight piece. The distance is the area under the whole graph: two triangles and a rectangle.",
+    solution: "Slopes: $12/4 = 3$ m/s² and $-12/3 = -4$ m/s². Area: $\\tfrac12 \\cdot 4 \\cdot 12 + 6 \\cdot 12 + \\tfrac12 \\cdot 3 \\cdot 12 = 24 + 72 + 18 = 114$ m." },
+  { n: 10, text: "On the Moon, $g \\approx 1.6$ m/s². An astronaut drops a hammer from a height of $1.25$ m. How long does it take to land, and how fast is it moving when it does?",
+    fields: [{ label: "time (s)", answer: 1.25 }, { label: "speed (m/s)", answer: 2 }],
+    hint: "$t = \\sqrt{2d/g}$, then $v = g t$, with the Moon's $g$.",
+    solution: "$t = \\sqrt{2 \\cdot 1.25 / 1.6} = \\sqrt{1.5625} = 1.25$ s, and $v = 1.6 \\cdot 1.25 = 2$ m/s. On Earth the same drop takes only half a second." },
+];
+
+const EXWIDGETS = {
+  vgraph(box) {
+    const cv = el("canvas", { class: "pcanvas", "aria-label": "Velocity against time: rising steadily from 0 to 12 metres per second over the first 4 seconds, level at 12 until 10 seconds, then falling to 0 at 13 seconds." });
+    box.append(cv);
+    const plot = new Plot(cv, { x: [0, 14], y: [0, 15], aspect: 0.42 });
+    const v = (t) => (t <= 4 ? 3 * t : t <= 10 ? 12 : t <= 13 ? 12 - 4 * (t - 10) : 0);
+    const draw = () => {
+      plot.resize(); plot.clear(); plot.axes({ ticks: 1, xl: "t (s)", yl: "v (m/s)", numbers: false });
+      const g = plot.ctx;
+      g.fillStyle = plot.col("muted"); g.font = `11px ${css("--mono")}`; g.textAlign = "center"; g.textBaseline = "top";
+      for (const t of [2, 4, 6, 8, 10, 12, 14]) g.fillText(String(t), plot.X(t), plot.Y(0) + 4);
+      g.textAlign = "right"; g.textBaseline = "middle";
+      for (const y of [3, 6, 9, 12, 15]) g.fillText(String(y), plot.X(0) - 5, plot.Y(y));
+      plot.curve(v, plot.col("mark"), 2.6, [0, 13.6]);
+      for (const [t, y] of [[4, 12], [10, 12], [13, 0]]) plot.dot(t, y, plot.col("mark"), 4);
+    };
+    redrawers.add(draw); draw();
+  },
+};
+
+/* ── motion lab ── */
+const MOTIONS = [
+  { name: "Constant velocity", v0: 6, a: 0, T: 6 },
+  { name: "Speeding up from rest", v0: 0, a: 2, T: 6 },
+  { name: "Braking to a stop", v0: 20, a: -5, T: 4 },
+  { name: "Thrown straight up (x is the height)", v0: 20, a: -10, T: 4 },
+  { name: "Your own", v0: null },
+];
+function buildMotionLab() {
+  const sel = $("#mlPreset"), sv = $("#mlV0"), sa = $("#mlAcc"), st = $("#mlT"), play = $("#mlPlay");
+  MOTIONS.forEach((m, i) => sel.append(el("option", { value: i, text: m.name })));
+  const track = new Plot($("#mlTrack"), { aspect: 0.14, inset: { l: 20, r: 20, t: 10, b: 22 } });
+  const px = new Plot($("#mlX"), { aspect: 0.3 }), pv = new Plot($("#mlV"), { aspect: 0.3 }), pa = new Plot($("#mlA"), { aspect: 0.26 });
+  const acc = () => css("--acc");
+  let v0 = 0, a = 2, T = 6, t = 0, playing = false, last = 0;
+  const X = (s) => v0 * s + 0.5 * a * s * s, V = (s) => v0 + a * s;
+
+  function ranges() {
+    const xs = []; for (let i = 0; i <= 100; i++) xs.push(X(T * i / 100));
+    let lo = Math.min(0, ...xs), hi = Math.max(0, ...xs); if (hi - lo < 4) { hi += 2; lo -= 2; }
+    const vs = [V(0), V(T), 0]; let vlo = Math.min(...vs), vhi = Math.max(...vs); if (vhi - vlo < 4) { vhi += 2; vlo -= 2; }
+    const pad = (l, h) => [l - (h - l) * 0.1, h + (h - l) * 0.12];
+    return { x: pad(lo, hi), v: pad(vlo, vhi), a: [Math.min(-1, a) - 2.5, Math.max(1, a) + 3] };
+  }
+  function draw() {
+    const R = ranges();
+    $("#mlV0Out").textContent = v0.toFixed(1); $("#mlAccOut").textContent = a.toFixed(1); $("#mlTOut").textContent = t.toFixed(2);
+    // track
+    track.setRange(R.x, [-1, 1]); track.resize(); track.clear();
+    const g = track.ctx, y0 = track.Y(-0.3);
+    g.strokeStyle = track.col("muted"); g.lineWidth = 1.5; g.beginPath(); g.moveTo(track.box.l, y0); g.lineTo(track.box.r, y0); g.stroke();
+    g.fillStyle = track.col("muted"); g.font = `11px ${css("--mono")}`; g.textAlign = "center"; g.textBaseline = "top";
+    const step = (R.x[1] - R.x[0]) > 60 ? 20 : (R.x[1] - R.x[0]) > 25 ? 10 : 5;
+    for (let m = Math.ceil(R.x[0] / step) * step; m <= R.x[1]; m += step) { g.fillRect(track.X(m) - 0.5, y0 - 4, 1, 8); g.fillText(m + " m", track.X(m), y0 + 6); }
+    for (let s = 0; s < t - 1e-9; s += 1) { g.globalAlpha = 0.3; g.fillStyle = track.col("curve"); g.beginPath(); g.arc(track.X(X(s)), track.Y(0.1), 6, 0, 7); g.fill(); }
+    g.globalAlpha = 1;
+    const bx = track.X(X(t)), by = track.Y(0.1);
+    const arr = (x0, y, len, color) => {
+      if (Math.abs(len) < 2) return;
+      g.strokeStyle = g.fillStyle = color; g.lineWidth = 3; g.beginPath(); g.moveTo(x0, y); g.lineTo(x0 + len, y); g.stroke();
+      const d = Math.sign(len); g.beginPath(); g.moveTo(x0 + len, y); g.lineTo(x0 + len - d * 8, y - 5); g.lineTo(x0 + len - d * 8, y + 5); g.fill();
+    };
+    arr(bx, by - 16, V(t) * 3, track.col("mark"));
+    arr(bx, by + 14, a * 5, acc());
+    g.fillStyle = track.col("curve"); g.beginPath(); g.arc(bx, by, 8, 0, 7); g.fill();
+    // position
+    px.setRange([0, T], R.x); px.resize(); px.clear(); px.axes({ ticks: 1, xl: "t (s)", yl: "x (m)", numbers: true });
+    px.curve(X, px.col("curve"), 2.6, [0, T]);
+    px.lineThrough(t, X(t), V(t), px.col("mark"), 2, 130);
+    px.dot(t, X(t), px.col("mark"), 5);
+    // velocity, with the area under it
+    pv.setRange([0, T], R.v); pv.resize(); pv.clear(); pv.axes({ ticks: 1, xl: "t (s)", yl: "v (m/s)", numbers: true });
+    const h = pv.ctx; h.save(); h.globalAlpha = 0.25; h.fillStyle = pv.col("curve");
+    h.beginPath(); h.moveTo(pv.X(0), pv.Y(0)); for (let i = 0; i <= 60; i++) { const s = t * i / 60; h.lineTo(pv.X(s), pv.Y(V(s))); } h.lineTo(pv.X(t), pv.Y(0)); h.closePath(); h.fill(); h.restore();
+    pv.curve(V, pv.col("mark"), 2.6, [0, T]);
+    pv.lineThrough(t, V(t), a, acc(), 2, 110);
+    pv.dot(t, V(t), pv.col("mark"), 5);
+    // acceleration
+    pa.setRange([0, T], R.a); pa.resize(); pa.clear(); pa.axes({ ticks: 1, xl: "t (s)", yl: "a (m/s²)", numbers: false });
+    pa.curve(() => a, acc(), 2.6, [0, T]);
+    pa.dot(t, a, acc(), 5);
+    pa.text(`a = ${fmtNum(a, 1)} m/s²`, T * 0.55, a, pa.col("ink"), { align: "center", dy: -8 });
+    $("#mlVals").replaceChildren(
+      el("dt", { text: "time t" }), el("dd", { text: t.toFixed(2) + " s" }),
+      el("dt", { text: "position x" }), el("dd", { text: X(t).toFixed(1) + " m" }),
+      el("dt", { text: "velocity v" }), el("dd", { class: "em", text: fmtNum(V(t), 1) + " m/s" }),
+      el("dt", { text: "acceleration a" }), el("dd", { text: fmtNum(a, 1) + " m/s²" }),
+      el("dt", { text: "shaded area" }), el("dd", { text: X(t).toFixed(1) + " m" }));
+  }
+  function use(i) {
+    const m = MOTIONS[i];
+    if (m.v0 === null) return;
+    v0 = m.v0; a = m.a; T = m.T; t = 0;
+    sel.value = String(i); sv.value = v0; sa.value = a; st.max = T; st.value = 0;
+    stop(); draw();
+  }
+  function frame(now) {
+    if (!playing) return;
+    t = Math.min(T, t + (now - last) / 1000); last = now; st.value = t; draw();
+    if (t >= T) { stop(); return; }
+    requestAnimationFrame(frame);
+  }
+  function start() { if (t >= T) t = 0; playing = true; play.textContent = "Pause"; last = performance.now(); requestAnimationFrame(frame); }
+  function stop() { playing = false; play.textContent = "Play"; }
+  play.addEventListener("click", () => (playing ? stop() : start()));
+  $("#mlReset").addEventListener("click", () => { stop(); t = 0; st.value = 0; draw(); });
+  sel.addEventListener("change", () => use(+sel.value));
+  const custom = () => { sel.value = String(MOTIONS.length - 1); v0 = +sv.value; a = +sa.value; draw(); };
+  sv.addEventListener("input", custom); sa.addEventListener("input", custom);
+  st.addEventListener("input", () => { stop(); t = +st.value; draw(); });
+  for (const [cv, p] of [[$("#mlX"), px], [$("#mlV"), pv]]) dragX(cv, p, (nt) => { stop(); t = clamp(nt, 0, T); st.value = t; draw(); }, 0.05, () => t);
+  redrawers.add(draw);
+  use(1);
+}
+
+/* ── catch the ruler ── */
+function buildRuler() {
+  const cv = $("#rulerCanvas"), ctx = cv.getContext("2d");
+  const startBtn = $("#rulerStart"), msg = $("#rulerMsg");
+  const G = 9.8, LEN = 30;                          // a 30 cm ruler
+  let state = "idle", dropAt = 0, fallen = 0, timer = null, results = [];
+  let W = 240, H = 420, pxPerCm = 11;
+  function size() {
+    W = cv.clientWidth || 240; H = Math.round(W * 1.75);
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = W * dpr; cv.height = H * dpr; cv.style.height = H + "px"; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    pxPerCm = (H * 0.86) / (LEN * 1.6);
+  }
+  function draw() {
+    size();
+    const fy = H * 0.55, rw = W * 0.24, rx = W / 2 - rw / 2;
+    ctx.fillStyle = css("--bg"); ctx.fillRect(0, 0, W, H);
+    const bottom = fy + fallen * pxPerCm;           // the 0 cm end
+    ctx.fillStyle = css("--ruler"); ctx.strokeStyle = css("--rule");
+    ctx.fillRect(rx, bottom - LEN * pxPerCm - 4, rw, LEN * pxPerCm + 8); ctx.strokeRect(rx, bottom - LEN * pxPerCm - 4, rw, LEN * pxPerCm + 8);
+    ctx.fillStyle = css("--ruler-ink"); ctx.strokeStyle = css("--ruler-ink"); ctx.font = `10px ${css("--mono")}`; ctx.textBaseline = "middle"; ctx.textAlign = "right";
+    for (let c = 0; c <= LEN; c++) {
+      const y = bottom - c * pxPerCm, w = c % 5 === 0 ? rw * 0.45 : rw * 0.22;
+      ctx.beginPath(); ctx.moveTo(rx, y); ctx.lineTo(rx + w, y); ctx.lineWidth = 1; ctx.stroke();
+      if (c % 5 === 0) ctx.fillText(String(c), rx + rw - 4, y);
+    }
+    const closed = state === "caught";
+    ctx.fillStyle = css("--skin");
+    const fw = W * 0.3, fh = 14, gap = closed ? 0 : 18;
+    ctx.beginPath(); ctx.roundRect(rx - fw - gap + (closed ? 6 : 0), fy - fh / 2, fw, fh, 7); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(rx + rw + gap - (closed ? 6 : 0), fy - fh / 2, fw, fh, 7); ctx.fill();
+    if (state === "caught" || state === "missed") {
+      ctx.strokeStyle = css("--mark"); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(4, fy); ctx.lineTo(rx - fw - 4, fy); ctx.stroke();
+    }
+  }
+  function loop() {
+    if (state !== "falling") return;
+    const s = (performance.now() - dropAt) / 1000;
+    fallen = 0.5 * G * s * s * 100;
+    if (fallen > LEN + 2) { state = "missed"; fallen = LEN + 2; msg.textContent = "Missed: it fell right through. That's more than 0.25 s."; startBtn.textContent = "Try again"; draw(); return; }
+    draw(); requestAnimationFrame(loop);
+  }
+  function catchIt() {
+    if (state === "waiting") { clearTimeout(timer); state = "idle"; msg.textContent = "Too early: wait for the ruler to move."; startBtn.textContent = "Try again"; return; }
+    if (state !== "falling") return;
+    const s = (performance.now() - dropAt) / 1000;
+    fallen = Math.min(LEN, 0.5 * G * s * s * 100);
+    state = "caught";
+    const t = Math.sqrt(2 * (fallen / 100) / G);
+    $("#rulerDist").innerHTML = `${fallen.toFixed(1)} <small>cm fallen</small>`;
+    $("#rulerTime").innerHTML = `${t.toFixed(3)} <small>s reaction time</small>`;
+    results.push(t);
+    const best = Math.min(...results);
+    $("#rulerAttempts").replaceChildren(...results.map((r) => el("li", { class: r === best ? "best" : "", text: r.toFixed(3) + " s" })));
+    msg.textContent = `Caught at ${fallen.toFixed(1)} cm, so t = √(2d/g) = ${t.toFixed(3)} s.`;
+    startBtn.textContent = "Again";
+    draw();
+  }
+  startBtn.addEventListener("click", () => {
+    fallen = 0; state = "waiting"; draw();
+    msg.textContent = "Get ready…";
+    startBtn.textContent = "Waiting…";
+    timer = setTimeout(() => { state = "falling"; dropAt = performance.now(); msg.textContent = "Catch it!"; requestAnimationFrame(loop); }, 1200 + Math.random() * 2600);
+    cv.focus({ preventScroll: true });
+  });
+  cv.tabIndex = 0;
+  cv.addEventListener("pointerdown", (e) => { e.preventDefault(); catchIt(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== " " || (state !== "falling" && state !== "waiting")) return;
+    e.preventDefault(); e.stopPropagation(); catchIt();
+  }, true);
+  redrawers.add(draw); draw();
+}
+
+buildMotionLab();
+buildRuler();
+Lesson.start({
+  id: "linear-motion",
+  questions: QUESTIONS,
+  partMeta: {
+    LM01Speed: "average and instantaneous", LM02Relative: "frames of reference", LM03Velocity: "speed with direction",
+    LM04Acceleration: "Δv / Δt", LM05Inclines: "Galileo", LM06HowFast: "v = g t", LM07HowFar: "d = ½ g t²",
+    LM08Reaction: "an experiment", LM09Recap: "summary",
+  },
+  exercises: EXERCISES,
+  exWidgets: EXWIDGETS,
+  endCard: { title: "That's linear motion.", text: "Now try the exercises, the motion lab and the ruler below.", button: "Go to the exercises", target: "#exercises" },
+});
+</script>
+</body>
+</html>

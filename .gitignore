@@ -1,0 +1,16 @@
+# secrets
+.env
+
+# Python
+.venv/
+__pycache__/
+
+# regenerable build output (the finished videos in */web/media are kept)
+lessonkit/cache/
+*/manim/build/
+*/manim/media/
+voice-samples/
+
+# local tooling
+.claude/
+.DS_Store

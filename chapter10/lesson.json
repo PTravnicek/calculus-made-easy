@@ -1,0 +1,42 @@
+{
+  "title": "Geometrical Meaning of Differentiation",
+  "subtitle": "Calculus Made Easy, Chapter X",
+  "scenes": [
+    {
+      "scene": "Ch01Tangent",
+      "slug": "tangent"
+    },
+    {
+      "scene": "Ch02ReadingSlopes",
+      "slug": "reading-slopes"
+    },
+    {
+      "scene": "Ch03MaxMin",
+      "slug": "max-min"
+    },
+    {
+      "scene": "Ch04Oddities",
+      "slug": "curious-curves"
+    },
+    {
+      "scene": "Ch05Lines",
+      "slug": "straight-lines"
+    },
+    {
+      "scene": "Ch06Parabola",
+      "slug": "parabola"
+    },
+    {
+      "scene": "Ch07TangentAngle",
+      "slug": "tangent-angle"
+    },
+    {
+      "scene": "Ch08TangentFromPoint",
+      "slug": "tangent-from-point"
+    },
+    {
+      "scene": "Ch09Recap",
+      "slug": "recap"
+    }
+  ]
+}

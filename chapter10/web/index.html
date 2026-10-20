@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Geometrical Meaning of Differentiation</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Spectral:ital,wght@0,500;0,600;1,500&display=swap">
+<link rel="stylesheet" href="player.css">
+<style>
+/* Figure 7 in the masthead: a curve, Q, T, dx and dy. */
+.figure7 { width: 220px; height: auto; color: var(--ink); }
+.figure7 .curve { stroke: var(--accent); }
+.figure7 .tan { stroke: var(--mark); }
+.figure7 .dx { stroke: var(--dx); }
+.figure7 .dy { stroke: var(--dy); }
+.figure7 text { font: italic 15px var(--display); fill: currentColor; }
+.figure7 .lab-dx { fill: var(--dx); }
+.figure7 .lab-dy { fill: var(--dy); }
+.figure7 .axis { stroke: var(--muted); }
+.figure7 .pt { fill: var(--mark); }
+</style>
+<script src="data.js"></script>
+<script src="player.js"></script>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div>
+      <p class="eyebrow"><b>Calculus Made Easy</b> · Chapter X</p>
+      <h1>Geometrical Meaning of Differentiation</h1>
+      <p class="lede">A narrated, animated walk through Silvanus Thompson's chapter on what $\frac{dy}{dx}$ looks like on a graph. The video stops to ask you questions along the way, and Thompson's Exercises VIII wait underneath.</p>
+      <dl class="facts" id="facts"></dl>
+    </div>
+    <svg class="figure7" viewBox="0 0 220 170" role="img" aria-label="A curve with a point Q, a small step dx to the right and dy upward to the point T, and the tangent at Q">
+      <path class="axis" d="M18 152 H210 M18 152 V8" fill="none" stroke-width="1.2"/>
+      <path class="curve" d="M30 140 C 80 132, 130 104, 200 22" fill="none" stroke-width="2.6"/>
+      <path class="tan" d="M58 152 L 196 58" fill="none" stroke-width="1.6"/>
+      <path class="dx" d="M98 125 H 150" fill="none" stroke-width="2.4"/>
+      <path class="dy" d="M150 125 V 86" fill="none" stroke-width="2.4"/>
+      <circle class="pt" cx="98" cy="125" r="3.6"/>
+      <circle class="pt" cx="150" cy="86" r="3.6"/>
+      <text x="84" y="118">Q</text>
+      <text x="138" y="80">T</text>
+      <text class="lab-dx" x="114" y="142">dx</text>
+      <text class="lab-dy" x="156" y="110">dy</text>
+      <text x="8" y="166">O</text>
+      <text x="200" y="166">X</text>
+      <text x="4" y="16">Y</text>
+    </svg>
+  </header>
+
+  <section id="player" aria-label="Interactive video"></section>
+
+  <section id="exercises" aria-labelledby="exTitle" style="display:grid; gap:18px">
+    <div class="section-head">
+      <p class="eyebrow">After the video</p>
+      <h2 id="exTitle">Exercises VIII</h2>
+      <p>Thompson's ten exercises for this chapter. Type a number, a fraction such as <code>-5/3</code>, a root such as <code>sqrt(2)</code>, or an angle such as <code>26°34'</code>. Thompson's own advice applies: check what you deduce by plotting the curves.</p>
+      <div class="progress"><span class="count" id="exCount"></span><div class="dots" id="exDots"></div></div>
+    </div>
+    <div class="sheet" id="sheet"></div>
+  </section>
+
+  <section aria-labelledby="labTitle" style="display:grid; gap:18px">
+    <div class="section-head">
+      <p class="eyebrow">Slope lab</p>
+      <h2 id="labTitle">From chord to tangent</h2>
+      <p>Part 1 in your own hands. Drag $Q$ along the curve and shrink $dx$: the slope of the chord $QT$ settles on the slope of the tangent. The lower graph plots $\frac{dy}{dx}$ against $x$, as in Part 6.</p>
+    </div>
+    <div class="lab" id="lab">
+      <div class="lab-plots">
+        <canvas class="pcanvas draggable" id="labTop" tabindex="0" aria-label="The curve, with the point Q, the step dx and dy, and the chord QT. Drag, or use the arrow keys, to move Q."></canvas>
+        <canvas class="pcanvas" id="labBot" aria-label="Graph of dy/dx against x"></canvas>
+      </div>
+      <div class="lab-side">
+        <label for="labPreset"><span>Curve</span>
+          <select id="labPreset"></select>
+        </label>
+        <label for="labExpr"><span>Or type your own, in terms of $x$</span>
+          <input type="text" id="labExpr" spellcheck="false" autocomplete="off">
+        </label>
+        <div class="err" id="labErr" aria-live="polite"></div>
+        <label for="labDx"><span>Step $dx$: <output id="labDxOut"></output></span>
+          <input type="range" id="labDx" min="0" max="100" value="22">
+        </label>
+        <dl class="vals" id="labVals"></dl>
+        <p class="caption-small">Functions you can use: <code>sqrt</code>, <code>sin</code>, <code>cos</code>, <code>tan</code>, <code>exp</code>, <code>ln</code>, <code>abs</code>, and <code>^</code> for powers.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="credits">
+    <p>Adapted from Chapter X of <i>Calculus Made Easy</i> by Silvanus P. Thompson (2nd edition, 1914), which is in the public domain. Read the original chapter at <a href="https://calculusmadeeasy.org/10.html" target="_blank" rel="noopener">calculusmadeeasy.org</a>.</p>
+    <p>Animations made with Manim Community Edition, the community-maintained fork of 3Blue1Brown's <i>manim</i>. <span id="voiceCredit"></span></p>
+  </footer>
+</div>
+
+<script>
+"use strict";
+const { $, el, clamp, css, dms, compile, fmtNum, Plot, dragX, redrawers } = Lesson.util;
+
+/* ── the questions the video stops for ── */
+const QUESTIONS = {
+  "ch2-down45": {
+    kind: "choice",
+    prompt: "The line now slopes <em>downward</em> at $45°$. What is $\\frac{dy}{dx}$?",
+    options: ["$1$", "$-1$", "$0$", "$45$"], answer: 1,
+    explain: "Going downhill, $dy$ is a step down, so it counts as negative; at $45°$ it is just as long as $dx$. So $\\frac{dy}{dx} = -1$.",
+  },
+  "ch3-flat": {
+    kind: "drag",
+    prompt: "Drag the point along the curve to a place where $\\frac{dy}{dx} = 0$, then press Check.",
+    f: (x) => x ** 3 / 3 - 2 * x * x + 3 * x + 1, df: (x) => x * x - 4 * x + 3, x: [-1, 5], y: [-2, 5], start: -0.3, range: [-0.6, 4.6],
+    explain: "The tangent lies flat at $x = 1$, the top of the summit, and at $x = 3$, the bottom of the trough.",
+  },
+  "ch4-nose": {
+    kind: "choice",
+    prompt: "At the nose of this curve the tangent stands straight up. What is $\\frac{dy}{dx}$ there?",
+    options: ["$0$", "$1$", "$-1$", "infinitely great"], answer: 3,
+    explain: "Near the nose $dx$ shrinks to nothing while $dy$ does not, so $\\frac{dy}{dx}$ grows without limit.",
+  },
+  "ch5-line": {
+    kind: "number",
+    prompt: "A straight line passes through $(0,\\,1)$ and $(6,\\,3)$. What is its $\\frac{dy}{dx}$?",
+    label: "$\\frac{dy}{dx} =$", answer: 1 / 3,
+    explain: "It rises $2$ while running $6$, so $\\frac{dy}{dx} = \\frac{2}{6} = \\frac13$.",
+  },
+  "ch6-slope4": {
+    kind: "number",
+    prompt: "For $y = \\tfrac14 x^2 + 3$, what is the slope where $x = 4$?",
+    label: "slope $=$", answer: 2,
+    explain: "$\\frac{dy}{dx} = \\tfrac12 x$, which is $2$ when $x = 4$.",
+  },
+  "ch7-slope": {
+    kind: "number",
+    prompt: "What is the slope of the tangent to $y = \\frac{1}{2x} + 3$ where $x = -1$?",
+    label: "$\\frac{dy}{dx} =$", answer: -0.5,
+    explain: "$\\frac{dy}{dx} = -\\frac{1}{2x^2}$; at $x = -1$ that is $-\\tfrac12$.",
+  },
+  "ch8-touch": {
+    kind: "swing",
+    prompt: "Swing the line through $(2,\\,-1)$ until it just touches $y = x^2 - 5x + 6$, then press Check.",
+    explain: "There are two answers: slope $-3$, touching at $(1,\\,2)$, and slope $1$, touching at $(3,\\,0)$.",
+  },
+};
+
+/* ── question widgets specific to this chapter ── */
+const WIDGETS = {
+  drag(q, body, api) {
+    const cv = el("canvas", { class: "qcanvas", tabindex: "0", "aria-label": "Curve with a draggable point. Use the arrow keys to move it." });
+    const ro = el("div", { class: "readout" });
+    body.append(cv, ro);
+    let x = q.start;
+    const plot = new Plot(cv, { x: q.x, y: q.y, aspect: 0.5, screen: true });
+    const draw = () => {
+      plot.resize(); plot.clear(); plot.axes();
+      plot.curve(q.f, plot.col("curve"), 2.6);
+      plot.lineThrough(x, q.f(x), q.df(x), plot.col("mark"), 2, 150);
+      plot.dot(x, q.f(x), plot.col("mark"), 6);
+      ro.innerHTML = `x = <b>${x.toFixed(2)}</b> &nbsp; dy/dx = <b>${fmtNum(q.df(x))}</b>`;
+    };
+    dragX(cv, plot, (nx) => { x = clamp(nx, q.range[0], q.range[1]); draw(); }, 0.02, () => x);
+    redrawers.add(draw); draw();
+    return {
+      redraw: draw,
+      check() {
+        const s = q.df(x);
+        if (Math.abs(s) < 0.12) api.settle(true, `Yes: the tangent lies flat at $x \\approx ${x.toFixed(2)}$. ` + q.explain);
+        else api.settle(false, `Here the slope is ${fmtNum(s)}: the curve is ${s > 0 ? "still rising" : "falling"}. Look for where the tangent lies flat.`);
+      },
+      reveal() { x = 1; draw(); },
+      dispose() { redrawers.delete(draw); },
+    };
+  },
+  swing(q, body, api) {
+    const f = (x) => x * x - 5 * x + 6;
+    const cv = el("canvas", { class: "qcanvas", "aria-hidden": "true" });
+    const sid = "qswing";
+    const slider = el("input", { type: "range", id: sid, min: "-6", max: "3", step: "0.01", value: "-0.8" });
+    const ro = el("div", { class: "readout", "aria-live": "polite" });
+    body.append(cv, el("label", { for: sid, class: "readout", text: "Slope of the line" }), slider, ro);
+    const plot = new Plot(cv, { x: [-0.5, 5.5], y: [-2, 7.5], aspect: 0.48, screen: true });
+    const draw = () => {
+      const m = +slider.value;
+      plot.resize(); plot.clear(); plot.axes();
+      plot.curve(f, plot.col("curve"), 2.6, [-0.3, 5.3]);
+      plot.lineThrough(2, -1, m, plot.col("mark"), 2);
+      const disc = (m + 3) * (m - 1);
+      let state;
+      if (Math.abs(disc) < 0.35) state = "just touches";
+      else if (disc > 0) {
+        state = "cuts the curve twice";
+        for (const sg of [-1, 1]) { const xx = ((5 + m) + sg * Math.sqrt(disc)) / 2; plot.dot(xx, f(xx), plot.col("dy"), 5); }
+      } else state = "misses the curve";
+      if (Math.abs(disc) < 0.35) { const xx = (5 + m) / 2; plot.dot(xx, f(xx), plot.col("dx"), 6); }
+      plot.dot(2, -1, plot.col("mark"), 6);
+      ro.innerHTML = `slope = <b>${fmtNum(m)}</b> &nbsp; the line <b>${state}</b>`;
+    };
+    slider.addEventListener("input", draw);
+    slider.addEventListener("keydown", (e) => e.stopPropagation());
+    redrawers.add(draw); draw();
+    return {
+      redraw: draw,
+      check() {
+        const m = +slider.value, disc = (m + 3) * (m - 1);
+        if (Math.abs(disc) < 0.35) { const xx = (5 + m) / 2; const r1 = (v) => (Math.round(v * 10) / 10 + 0).toFixed(1); api.settle(true, `It touches at about $(${r1(xx)},\\,${r1(f(xx))})$. ` + q.explain); }
+        else api.settle(false, disc > 0 ? "It still cuts the curve in two places. Swing it a little further." : "Now it misses the curve altogether. Swing it back a little.");
+      },
+      reveal() { slider.value = "1"; draw(); },
+      dispose() { redrawers.delete(draw); },
+    };
+  },
+};
+
+/* ── Exercises VIII ── */
+const EXERCISES = [
+  { n: 1, text: "Plot $y = \\tfrac34 x^2 - 5$ (Thompson suggests millimetre paper). At several values of $x$, measure the angle the curve makes with the horizontal, then check it against the angle whose tangent is $\\frac{dy}{dx}$. Do it for $x = 2$ below.",
+    widget: "protractor",
+    fields: [{ label: "$\\frac{dy}{dx}$ at $x = 2$", answer: 3 }, { label: "angle at $x = 2$", answer: Math.atan(3) * 180 / Math.PI, angle: true, ph: "e.g. 30°15'" }],
+    hint: "Differentiating gives $\\frac{dy}{dx} = \\tfrac32 x$. The angle is the one whose tangent equals that number.",
+    solution: "$\\frac{dy}{dx} = \\tfrac32 x = 3$ at $x = 2$, and the angle whose tangent is $3$ is $71°34'$. Drag the point to $x = 2$ and the protractor reads the same." },
+  { n: 2, text: "Find the slope of the curve $y = 0.12x^3 - 2$ at the point where $x = 2$.",
+    fields: [{ label: "slope", answer: 1.44 }],
+    hint: "Differentiate first: $\\frac{dy}{dx} = 0.36x^2$.",
+    solution: "$\\frac{dy}{dx} = 0.36x^2 = 0.36 \\times 4 = 1.44$." },
+  { n: 3, text: "If $y = (x - a)(x - b)$, show that at the point of the curve where $\\frac{dy}{dx} = 0$, $x = \\tfrac12(a + b)$.",
+    widget: "roots", proof: true,
+    hint: "Multiply out first: $y = x^2 - (a + b)x + ab$.",
+    solution: "$\\frac{dy}{dx} = 2x - (a + b)$, which is zero when $x = \\tfrac12(a + b)$. The level point sits exactly halfway between the two places where the curve crosses the axis, wherever you put $a$ and $b$." },
+  { n: 4, text: "Find $\\frac{dy}{dx}$ for $y = x^3 + 3x$, and work out its value where $x = 0$, $x = \\tfrac12$, $x = 1$ and $x = 2$.",
+    fields: [{ label: "at $x = 0$", answer: 3 }, { label: "at $x = \\tfrac12$", answer: 3.75 }, { label: "at $x = 1$", answer: 6 }, { label: "at $x = 2$", answer: 15 }],
+    hint: "$\\frac{dy}{dx} = 3x^2 + 3$.",
+    solution: "$\\frac{dy}{dx} = 3x^2 + 3$, giving $3$, $3\\tfrac34$, $6$ and $15$." },
+  { n: 5, text: "On the circle $x^2 + y^2 = 4$, find the values of $x$ at the points where the slope is $1$.",
+    fields: [{ label: "$x_1$", answer: Math.SQRT2, group: "a" }, { label: "$x_2$", answer: -Math.SQRT2, group: "a" }],
+    hint: "On the upper half, $y = \\sqrt{4 - x^2}$, and Chapter IX's function-of-a-function dodge gives $\\frac{dy}{dx} = -\\frac{x}{\\sqrt{4 - x^2}} = -\\frac{x}{y}$.",
+    solution: "$-\\frac{x}{y} = 1$ means $y = -x$. Then $2x^2 = 4$, so $x = \\pm\\sqrt2 \\approx \\pm 1.414$: one point on each half of the circle." },
+  { n: 6, text: "Find the slope at any point of the ellipse $\\frac{x^2}{3^2} + \\frac{y^2}{2^2} = 1$, and give its value where $x = 0$ and where $x = 1$ (on the upper half).",
+    fields: [{ label: "at $x = 0$", answer: 0 }, { label: "at $x = 1$", answer: -1 / (3 * Math.SQRT2) }],
+    hint: "On the upper half, $y = \\tfrac23\\sqrt{9 - x^2}$.",
+    solution: "$\\frac{dy}{dx} = -\\frac49\\,\\frac{x}{y}$. It is $0$ where $x = 0$. Where $x = 1$, $y = \\tfrac{4\\sqrt2}{3}$ and the slope is $-\\frac{1}{3\\sqrt2} \\approx -0.236$ (and $+0.236$ on the lower half)." },
+  { n: 7, text: "The tangent to $y = 5 - 2x + 0.5x^3$ at the point where $x = 2$ has the form $y = mx + n$. Find $m$ and $n$.",
+    fields: [{ label: "$m$", answer: 4 }, { label: "$n$", answer: -3 }],
+    hint: "$m$ is the slope of the curve at $x = 2$. Then make the line pass through the point of contact.",
+    solution: "$\\frac{dy}{dx} = -2 + 1.5x^2 = 4$ at $x = 2$, so $m = 4$. The point of contact is $(2,\\,5)$, so $5 = 8 + n$ and $n = -3$." },
+  { n: 8, text: "At what angles do the curves $y = 3.5x^2 + 2$ and $y = x^2 - 5x + 9.5$ cut one another?",
+    fields: [{ label: "they cross at $x =$", answer: 1, group: "x" }, { label: "and at $x =$", answer: -3, group: "x" },
+      { label: "angle at $x = 1$", answer: 153.435, alt: [26.565], angle: true, ph: "e.g. 30°15'" }, { label: "angle at $x = -3$", answer: 2.468, angle: true }],
+    hint: "Set the two right-hand sides equal to find where they cross. At each crossing, find both slopes and turn them into angles.",
+    solution: "$2.5x^2 + 5x - 7.5 = 0$ gives $x = 1$ or $x = -3$. At $x = 1$ the slopes are $7$ and $-3$, at angles $81°52'$ and $-71°34'$: the curves cut at $153°26'$ (or $26°34'$ measured the other way). At $x = -3$ the slopes are $-21$ and $-11$, and the angle is only $2°28'$." },
+  { n: 9, text: "Tangents to the circle $y = \\pm\\sqrt{25 - x^2}$ are drawn at the points where $x = 3$ and $x = 4$ (upper half). Where do they meet, and at what angle?",
+    fields: [{ label: "$x$", answer: 25 / 7 }, { label: "$y$", answer: 25 / 7 }, { label: "angle", answer: 16.26, angle: true, ph: "e.g. 30°15'" }],
+    hint: "At $(3,\\,4)$ the slope is $-\\tfrac34$; at $(4,\\,3)$ it is $-\\tfrac43$.",
+    solution: "The tangents are $y = -\\tfrac34 x + \\tfrac{25}{4}$ and $y = -\\tfrac43 x + \\tfrac{25}{3}$. They meet where $x = y = \\tfrac{25}{7} \\approx 3.57$, at an angle of $53°8' - 36°52' = 16°16'$. The 1914 answer key prints $y = 3.50$; the two points are mirror images in the line $y = x$, so the crossing must lie on it." },
+  { n: 10, text: "The straight line $y = 2x - b$ touches the curve $y = 3x^2 + 2$ at one point. Find the point of contact and the value of $b$.",
+    fields: [{ label: "$x$", answer: 1 / 3 }, { label: "$y$", answer: 7 / 3 }, { label: "$b$", answer: -5 / 3 }],
+    hint: "Where they touch, the slopes agree: $6x = 2$.",
+    solution: "$6x = 2$ gives $x = \\tfrac13$, and $y = 3 \\cdot \\tfrac19 + 2 = 2\\tfrac13$. The line passes through that point, so $2\\tfrac13 = \\tfrac23 - b$ and $b = -\\tfrac53$." },
+];
+const EXWIDGETS = {
+  protractor(box) {
+    const f = (x) => 0.75 * x * x - 5, df = (x) => 1.5 * x;
+    const cv = el("canvas", { class: "pcanvas draggable", tabindex: "0", "aria-label": "The curve y = 3/4 x squared minus 5 with a draggable point and a protractor showing the angle of its slope. Use the arrow keys to move the point." });
+    const ro = el("div", { class: "feedback" });
+    box.append(cv, ro);
+    let x = 1;
+    const plot = new Plot(cv, { x: [-3.5, 3.5], y: [-6, 5], aspect: 0.52, inset: (w) => ({ l: 30, r: Math.round(w * 0.38), t: 12, b: 22 }) });
+    const draw = () => {
+      plot.resize(); plot.clear(); plot.axes();
+      plot.curve(f, plot.col("curve"), 2.5);
+      plot.lineThrough(x, f(x), df(x), plot.col("mark"), 2, 160);
+      plot.dot(x, f(x), plot.col("mark"), 5.5);
+      // protractor on the right
+      const g = plot.ctx, R = Math.min(plot.w * 0.15, plot.h * 0.36), cx = plot.w - plot.w * 0.19, cy = plot.h * 0.56;
+      g.strokeStyle = plot.col("muted"); g.lineWidth = 1; g.beginPath(); g.arc(cx, cy, R, -Math.PI / 2, Math.PI / 2, false); g.stroke();
+      g.beginPath(); g.moveTo(cx, cy - R); g.lineTo(cx, cy + R); g.stroke();
+      for (let a = -90; a <= 90; a += 10) {
+        const r0 = a % 30 === 0 ? R * 0.84 : R * 0.91, t = -a * Math.PI / 180;
+        g.beginPath(); g.moveTo(cx + Math.cos(t) * r0, cy + Math.sin(t) * r0); g.lineTo(cx + Math.cos(t) * R, cy + Math.sin(t) * R); g.stroke();
+      }
+      g.fillStyle = plot.col("muted"); g.font = `11px ${css("--mono")}`; g.textAlign = "left"; g.textBaseline = "middle";
+      for (const a of [-60, -30, 0, 30, 60]) { const t = -a * Math.PI / 180; g.fillText(a + "°", cx + Math.cos(t) * (R + 6), cy + Math.sin(t) * (R + 6)); }
+      const th = Math.atan(df(x));
+      g.strokeStyle = plot.col("dx"); g.setLineDash([3, 3]); g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + R, cy); g.stroke(); g.setLineDash([]);
+      g.strokeStyle = plot.col("mark"); g.lineWidth = 2.5; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.cos(-th) * R, cy + Math.sin(-th) * R); g.stroke();
+      g.lineWidth = 1.5; g.beginPath(); g.arc(cx, cy, R * 0.32, Math.min(0, -th), Math.max(0, -th)); g.stroke();
+      g.fillStyle = plot.col("ink"); g.font = `500 13px ${css("--mono")}`; g.textAlign = "center"; g.textBaseline = "top";
+      g.fillText("angle " + dms(th * 180 / Math.PI), cx, cy + R + 8);
+      ro.textContent = `x = ${x.toFixed(2)}   ·   measured angle ${dms(th * 180 / Math.PI)}`;
+    };
+    dragX(cv, plot, (nx) => { x = clamp(Math.round(nx * 20) / 20, -3.2, 3.2); draw(); }, 0.05, () => x);
+    redrawers.add(draw); draw();
+  },
+  roots(box) {
+    const ida = "ex3a", idb = "ex3b";
+    const sa = el("input", { type: "range", id: ida, min: "-3", max: "4", step: "0.1", value: "-1" });
+    const sb = el("input", { type: "range", id: idb, min: "-3", max: "4", step: "0.1", value: "3" });
+    const oa = el("output", { for: ida }), ob = el("output", { for: idb });
+    const cv = el("canvas", { class: "pcanvas", "aria-label": "The curve y = (x − a)(x − b), its two crossings with the axis, and its level point" });
+    const ro = el("div", { class: "feedback" });
+    box.append(el("div", { class: "sliders" },
+      el("label", { for: ida }, el("span", {}, "a = ", oa), sa),
+      el("label", { for: idb }, el("span", {}, "b = ", ob), sb)), cv, ro);
+    const plot = new Plot(cv, { x: [-4, 5], y: [-6, 8], aspect: 0.45 });
+    const draw = () => {
+      const a = +sa.value, b = +sb.value, m = (a + b) / 2, vy = -(((b - a) / 2) ** 2);
+      oa.textContent = a.toFixed(1); ob.textContent = b.toFixed(1);
+      plot.setRange([-4, 5], [Math.min(-1.5, vy * 1.15 - 0.6), 8]);
+      plot.resize(); plot.clear(); plot.axes({ ticks: 1 });
+      const f = (x) => (x - a) * (x - b);
+      plot.curve(f, plot.col("curve"), 2.5);
+      plot.seg(m, 0, m, vy, plot.col("muted"), 1.2, [4, 4]);
+      plot.lineThrough(m, vy, 0, plot.col("mark"), 2, 120);
+      plot.dot(a, 0, plot.col("dy"), 5); plot.dot(b, 0, plot.col("dy"), 5); plot.dot(m, vy, plot.col("mark"), 5.5);
+      plot.text("a", a, 0, plot.col("ink"), { align: "center", base: "bottom", dy: -8, font: `italic 14px ${css("--display")}` });
+      plot.text("b", b, 0, plot.col("ink"), { align: "center", base: "bottom", dy: -8, font: `italic 14px ${css("--display")}` });
+      ro.textContent = `Level point at x = ${m.toFixed(2)};   ½(a + b) = ${((a + b) / 2).toFixed(2)}`;
+    };
+    sa.addEventListener("input", draw); sb.addEventListener("input", draw);
+    redrawers.add(draw); draw();
+  },
+};
+/* ── slope lab ── */
+const PRESETS = [
+  { name: "y = ¼x² + 3 (Part 6)", expr: "x^2/4 + 3", x: [-5, 5], y: [0, 10] },
+  { name: "y = x³/3 − 2x² + 3x + 1 (Part 3)", expr: "x^3/3 - 2x^2 + 3x + 1", x: [-1, 5], y: [-2, 5] },
+  { name: "y = 1/(2x) + 3 (Part 7)", expr: "1/(2x) + 3", x: [-4, 2], y: [-1, 6] },
+  { name: "y = x² − 5x + 6 (Part 8)", expr: "x^2 - 5x + 6", x: [-0.5, 5.5], y: [-1.5, 7] },
+  { name: "y = 0.12x³ − 2 (Exercise 2)", expr: "0.12x^3 - 2", x: [-3, 3.5], y: [-6, 4] },
+  { name: "y = 0.25 + 0.13x² (Part 1)", expr: "0.25 + 0.13x^2", x: [0, 7], y: [0, 6] },
+];
+function buildLab() {
+  const sel = $("#labPreset"), inp = $("#labExpr"), slider = $("#labDx"), err = $("#labErr");
+  PRESETS.forEach((p, i) => sel.append(el("option", { value: i, text: p.name })));
+  sel.append(el("option", { value: "custom", text: "Your own curve" }));
+  const top = new Plot($("#labTop"), { aspect: 0.55 }), bot = new Plot($("#labBot"), { aspect: 0.3 });
+  let f = null, x = 0, xr = [-5, 5], yr = [0, 10];
+  const dxOf = () => 2 * Math.pow(10, -3 * (+slider.value) / 100);
+  const slope = (x) => { const h = 1e-5 * Math.max(1, Math.abs(x)); return (f(x + h) - f(x - h)) / (2 * h); };
+  function autoRange() {
+    const ys = []; for (let i = 0; i <= 200; i++) { const v = f(xr[0] + (xr[1] - xr[0]) * i / 200); if (Number.isFinite(v)) ys.push(v); }
+    if (!ys.length) return [-5, 5];
+    ys.sort((a, b) => a - b);
+    let lo = ys[Math.floor(ys.length * 0.04)], hi = ys[Math.ceil(ys.length * 0.96) - 1];
+    if (hi - lo < 1) { lo -= 1; hi += 1; }
+    const pad = (hi - lo) * 0.12; return [lo - pad, hi + pad];
+  }
+  function use(expr, range) {
+    try { const g = compile(expr); g(0.5); f = (t) => g(t); err.textContent = ""; }
+    catch (e) { err.textContent = e.message + "."; return; }
+    if (range) { xr = range.x; yr = range.y; } else { yr = autoRange(); }
+    x = clamp(x, xr[0], xr[1]);
+    if (!Number.isFinite(f(x))) x = xr[0] + (xr[1] - xr[0]) * 0.3;
+    draw();
+  }
+  function draw() {
+    if (!f) return;
+    const dx = dxOf();
+    $("#labDxOut").textContent = dx >= 0.1 ? dx.toFixed(2) : dx.toPrecision(2);
+    top.setRange(xr, yr); top.resize(); top.clear(); top.axes({ ticks: (xr[1] - xr[0]) > 8 ? 2 : 1 });
+    top.curve(f, top.col("curve"), 2.6);
+    const y = f(x), y2 = f(x + dx), dy = y2 - y, chord = dy / dx, s = slope(x);
+    top.lineThrough(x, y, s, top.col("muted"), 1, undefined);
+    if (Number.isFinite(chord)) top.lineThrough(x, y, chord, top.col("mark"), 2);
+    top.seg(x, y, x + dx, y, top.col("dx"), 3); top.seg(x + dx, y, x + dx, y2, top.col("dy"), 3);
+    top.dot(x, y, top.col("mark"), 5.5); if (dx > 0.02) top.dot(x + dx, y2, top.col("mark"), 4.5);
+    top.text("Q", x, y, top.col("ink"), { dx: -14, dy: -6, font: `italic 15px ${css("--display")}` });
+    if (dx > 0.15) top.text("T", x + dx, y2, top.col("ink"), { dx: -14, dy: -6, font: `italic 15px ${css("--display")}` });
+    // derivative graph
+    const ds = []; for (let i = 0; i <= 160; i++) { const v = slope(xr[0] + (xr[1] - xr[0]) * i / 160); if (Number.isFinite(v)) ds.push(v); }
+    ds.sort((a, b) => a - b);
+    let lo = ds.length ? ds[Math.floor(ds.length * 0.04)] : -1, hi = ds.length ? ds[Math.ceil(ds.length * 0.96) - 1] : 1;
+    lo = Math.min(lo, 0); hi = Math.max(hi, 0); if (hi - lo < 1) { hi += 0.5; lo -= 0.5; }
+    const pad = (hi - lo) * 0.15;
+    bot.setRange(xr, [lo - pad, hi + pad]); bot.resize(); bot.clear(); bot.axes({ ticks: (xr[1] - xr[0]) > 8 ? 2 : 1, yl: "dy/dx", numbers: false });
+    bot.curve(slope, bot.col("dy"), 2.2);
+    bot.seg(x, 0, x, s, bot.col("dy"), 3);
+    bot.dot(x, s, bot.col("mark"), 5);
+    bot.text(fmtNum(s), x, s, bot.col("ink"), { dx: 8, dy: -4 });
+    $("#labVals").replaceChildren(
+      el("dt", { text: "x" }), el("dd", { text: x.toFixed(3) }),
+      el("dt", { text: "y" }), el("dd", { text: y.toFixed(3) }),
+      el("dt", { class: "dx", text: "dx" }), el("dd", { class: "dx", text: dx.toPrecision(3) }),
+      el("dt", { class: "dy", text: "dy" }), el("dd", { class: "dy", text: dy.toPrecision(3) }),
+      el("dt", { text: "dy ÷ dx (chord QT)" }), el("dd", { class: "em", text: Number.isFinite(chord) ? chord.toFixed(4) : "–" }),
+      el("dt", { text: "slope of the tangent" }), el("dd", { text: Number.isFinite(s) ? s.toFixed(4) : "–" }));
+  }
+  sel.addEventListener("change", () => {
+    if (sel.value === "custom") { inp.focus(); return; }
+    const p = PRESETS[+sel.value]; inp.value = p.expr; x = p.x[0] + (p.x[1] - p.x[0]) * 0.45; use(p.expr, p);
+  });
+  inp.addEventListener("input", () => { sel.value = "custom"; clearTimeout(inp.t); inp.t = setTimeout(() => use(inp.value), 250); });
+  slider.addEventListener("input", draw);
+  dragX($("#labTop"), top, (nx) => { x = clamp(nx, xr[0], xr[1]); draw(); }, (xr[1] - xr[0]) / 200, () => x);
+  dragX($("#labBot"), bot, (nx) => { x = clamp(nx, xr[0], xr[1]); draw(); }, (xr[1] - xr[0]) / 200, () => x);
+  redrawers.add(draw);
+  const p = PRESETS[0]; inp.value = p.expr; x = 2; use(p.expr, p);
+}
+
+buildLab();
+Lesson.start({
+  id: "ch10",
+  questions: QUESTIONS,
+  widgets: WIDGETS,
+  partMeta: {
+    Ch01Tangent: "Fig. 7", Ch02ReadingSlopes: "Figs. 8–14", Ch03MaxMin: "Figs. 15, 16, 28", Ch04Oddities: "Figs. 17, 18, 25",
+    Ch05Lines: "Examples 1–2", Ch06Parabola: "Example 3", Ch07TangentAngle: "Example 4", Ch08TangentFromPoint: "Example 5", Ch09Recap: "Summary",
+  },
+  exercises: EXERCISES,
+  exWidgets: EXWIDGETS,
+  endCard: { title: "That's Chapter X.", text: "Now put it to work on Thompson's Exercises VIII.", button: "Go to the exercises", target: "#exercises" },
+});
+</script>
+</body>
+</html>

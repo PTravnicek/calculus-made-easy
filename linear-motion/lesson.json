@@ -1,0 +1,15 @@
+{
+  "title": "Linear Motion",
+  "subtitle": "Speed, velocity, acceleration and free fall",
+  "scenes": [
+    {"scene": "LM01Speed", "slug": "speed"},
+    {"scene": "LM02Relative", "slug": "relative"},
+    {"scene": "LM03Velocity", "slug": "velocity"},
+    {"scene": "LM04Acceleration", "slug": "acceleration"},
+    {"scene": "LM05Inclines", "slug": "inclines"},
+    {"scene": "LM06HowFast", "slug": "how-fast"},
+    {"scene": "LM07HowFar", "slug": "how-far"},
+    {"scene": "LM08Reaction", "slug": "reaction-time"},
+    {"scene": "LM09Recap", "slug": "recap"}
+  ]
+}
